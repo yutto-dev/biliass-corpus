@@ -1,3 +1,3 @@
 # biliass corpus
 
-Test corpus for biliass.
+An opt-in corpus of danmaku data for biliass.

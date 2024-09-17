@@ -17,6 +17,8 @@ CORPUS_CIDS = [
     "527536",  # BV14x411F71o?p=4
     "2428566",  # BV14x411F71o?p=5
     "16433563",  # BV16x411D7NK
+    "745913430",  # ep84340
+    "1176840",  # BV1Js411o76u
 ]
 CORPUS_DIR = Path("corpus")
 
