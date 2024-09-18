@@ -13,14 +13,24 @@ if TYPE_CHECKING:
 
 CORPUS_DIR = Path(__file__).parent / "corpus"
 CORPUS_XML_CIDS = [(path.stem,) for path in CORPUS_DIR.glob("xml/*.xml")]
+CORPUS_PB_CIDS = [(path.stem,) for path in CORPUS_DIR.glob("protobuf/*.pb")]
 
 
-def sha256(text: str) -> str:
+def sha256_str(text: str) -> str:
     return hashlib.sha256(text.encode()).hexdigest()
 
 
-def load_danmaku(cid: str) -> str:
+def sha256_bytes(text: bytes) -> str:
+    return hashlib.sha256(text).hexdigest()
+
+
+def load_xml_danmaku(cid: str) -> str:
     with Path(CORPUS_DIR / f"xml/{cid}.xml").open("r") as f:
+        return f.read()
+
+
+def load_protobuf_danmaku(cid: str) -> bytes:
+    with Path(CORPUS_DIR / f"protobuf/{cid}.pb").open("rb") as f:
         return f.read()
 
 
@@ -29,9 +39,22 @@ def load_danmaku(cid: str) -> str:
     ("cid",),
     CORPUS_XML_CIDS,
 )
-def test_corpus(snapshot: SnapshotAssertion, cid: str):
+def test_xml_corpus(snapshot: SnapshotAssertion, cid: str):
     random.seed(1127)
-    source_danmaku = load_danmaku(cid)
-    assert sha256(source_danmaku) == snapshot(name="source_hash")
+    source_danmaku = load_xml_danmaku(cid)
+    assert sha256_str(source_danmaku) == snapshot(name="source_hash")
     ass_danmaku = Danmaku2ASS(source_danmaku, 1920, 1080)
+    assert ass_danmaku == snapshot(name="ass")
+
+
+@pytest.mark.biliass
+@pytest.mark.parametrize(
+    ("cid",),
+    CORPUS_PB_CIDS,
+)
+def test_protobuf_corpus(snapshot: SnapshotAssertion, cid: str):
+    random.seed(1127)
+    source_danmaku = load_protobuf_danmaku(cid)
+    assert sha256_bytes(source_danmaku) == snapshot(name="source_hash")
+    ass_danmaku = Danmaku2ASS(source_danmaku, 1920, 1080, input_format="protobuf")
     assert ass_danmaku == snapshot(name="ass")

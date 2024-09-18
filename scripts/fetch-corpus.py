@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import asyncio
 from pathlib import Path
 
@@ -31,21 +32,49 @@ BILIBILI_HEADERS: dict[str, str] = {
 }
 
 
-async def download_xml_danmaku(client: httpx.AsyncClient, cid: str, corpus_dir: Path):
+def cli() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Download Bilibili danmaku corpus")
+    parser.add_argument("-w", "--overwrite", action="store_true", help="Overwrite existing corpus")
+    return parser.parse_args()
+
+
+async def download_xml_danmaku(client: httpx.AsyncClient, cid: str, corpus_dir: Path, overwrite: bool = False):
     corpus_dir.mkdir(parents=True, exist_ok=True)
+    corpus_file_path = corpus_dir.joinpath(f"{cid}.xml")
+    if not overwrite and corpus_file_path.exists():
+        return
     resp = await client.get(
         f"http://comment.bilibili.com/{cid}.xml",
         headers=BILIBILI_HEADERS,
         follow_redirects=True,
     )
     resp.encoding = "utf-8"
-    async with aiofiles.open(corpus_dir.joinpath(f"{cid}.xml"), "w") as f:
+    async with aiofiles.open(corpus_file_path, "w") as f:
         await f.write(resp.text)
 
 
+async def download_protobuf_danmaku(client: httpx.AsyncClient, cid: str, corpus_dir: Path, overwrite: bool = False):
+    corpus_dir.mkdir(parents=True, exist_ok=True)
+    corpus_file_path = corpus_dir.joinpath(f"{cid}.pb")
+    if not overwrite and corpus_file_path.exists():
+        return
+    resp = await client.get(
+        f"http://api.bilibili.com/x/v2/dm/web/seg.so?type=1&oid={cid}&segment_index={1}",
+        headers=BILIBILI_HEADERS,
+    )
+    async with aiofiles.open(corpus_file_path, "wb") as f:
+        await f.write(resp.content)
+
+
 async def main():
+    args = cli()
     async with httpx.AsyncClient() as client:
-        await asyncio.gather(*[download_xml_danmaku(client, cid, CORPUS_DIR / "xml") for cid in CORPUS_CIDS])
+        await asyncio.gather(
+            *[download_xml_danmaku(client, cid, CORPUS_DIR / "xml", args.overwrite) for cid in CORPUS_CIDS]
+        )
+        await asyncio.gather(
+            *[download_protobuf_danmaku(client, cid, CORPUS_DIR / "protobuf", args.overwrite) for cid in CORPUS_CIDS]
+        )
 
 
 if __name__ == "__main__":
