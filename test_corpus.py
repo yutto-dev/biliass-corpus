@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import hashlib
-import random
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -40,7 +39,6 @@ def load_protobuf_danmaku(cid: str) -> bytes:
     CORPUS_XML_CIDS,
 )
 def test_xml_corpus(snapshot: SnapshotAssertion, cid: str):
-    random.seed(1127)
     source_danmaku = load_xml_danmaku(cid)
     assert sha256_str(source_danmaku) == snapshot(name="source_hash")
     ass_danmaku = Danmaku2ASS(source_danmaku, 1920, 1080)
@@ -53,7 +51,6 @@ def test_xml_corpus(snapshot: SnapshotAssertion, cid: str):
     CORPUS_PB_CIDS,
 )
 def test_protobuf_corpus(snapshot: SnapshotAssertion, cid: str):
-    random.seed(1127)
     source_danmaku = load_protobuf_danmaku(cid)
     assert sha256_bytes(source_danmaku) == snapshot(name="source_hash")
     ass_danmaku = Danmaku2ASS(source_danmaku, 1920, 1080, input_format="protobuf")
