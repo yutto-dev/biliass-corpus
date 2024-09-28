@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
-from biliass import Danmaku2ASS
+from biliass import convert_to_ass
 
 if TYPE_CHECKING:
     from syrupy.assertion import SnapshotAssertion
@@ -41,7 +41,7 @@ def load_protobuf_danmaku(cid: str) -> bytes:
 def test_xml_corpus(snapshot: SnapshotAssertion, cid: str):
     source_danmaku = load_xml_danmaku(cid)
     assert sha256_str(source_danmaku) == snapshot(name="source_hash")
-    ass_danmaku = Danmaku2ASS(source_danmaku, 1920, 1080)
+    ass_danmaku = convert_to_ass(source_danmaku, 1920, 1080)
     assert ass_danmaku == snapshot(name="ass")
 
 
@@ -53,5 +53,5 @@ def test_xml_corpus(snapshot: SnapshotAssertion, cid: str):
 def test_protobuf_corpus(snapshot: SnapshotAssertion, cid: str):
     source_danmaku = load_protobuf_danmaku(cid)
     assert sha256_bytes(source_danmaku) == snapshot(name="source_hash")
-    ass_danmaku = Danmaku2ASS(source_danmaku, 1920, 1080, input_format="protobuf")
+    ass_danmaku = convert_to_ass(source_danmaku, 1920, 1080, input_format="protobuf")
     assert ass_danmaku == snapshot(name="ass")
