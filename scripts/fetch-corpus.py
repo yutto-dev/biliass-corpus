@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 from pathlib import Path
+from urllib.parse import quote, unquote
 
 import aiofiles
 import httpx
@@ -35,6 +36,7 @@ BILIBILI_HEADERS: dict[str, str] = {
 def cli() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Download Bilibili danmaku corpus")
     parser.add_argument("-w", "--overwrite", action="store_true", help="Overwrite existing corpus")
+    parser.add_argument("-c", "--sessdata", default="", help="Cookies 中的 SESSDATA 字段")
     return parser.parse_args()
 
 
@@ -45,7 +47,6 @@ async def download_xml_danmaku(client: httpx.AsyncClient, cid: str, corpus_dir: 
         return
     resp = await client.get(
         f"http://comment.bilibili.com/{cid}.xml",
-        headers=BILIBILI_HEADERS,
         follow_redirects=True,
     )
     resp.encoding = "utf-8"
@@ -60,7 +61,6 @@ async def download_protobuf_danmaku(client: httpx.AsyncClient, cid: str, corpus_
         return
     resp = await client.get(
         f"http://api.bilibili.com/x/v2/dm/web/seg.so?type=1&oid={cid}&segment_index={1}",
-        headers=BILIBILI_HEADERS,
     )
     async with aiofiles.open(corpus_file_path, "wb") as f:
         await f.write(resp.content)
@@ -68,7 +68,12 @@ async def download_protobuf_danmaku(client: httpx.AsyncClient, cid: str, corpus_
 
 async def main():
     args = cli()
-    async with httpx.AsyncClient() as client:
+    cookies = httpx.Cookies()
+    cookies.set("SESSDATA", quote(unquote(args.sessdata)))
+    async with httpx.AsyncClient(
+        headers=BILIBILI_HEADERS,
+        cookies=cookies,
+    ) as client:
         await asyncio.gather(
             *[download_xml_danmaku(client, cid, CORPUS_DIR / "xml", args.overwrite) for cid in CORPUS_CIDS]
         )
