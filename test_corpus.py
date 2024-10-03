@@ -33,6 +33,7 @@ def load_protobuf_danmaku(cid: str) -> bytes:
         return f.read()
 
 
+@pytest.mark.benchmark
 @pytest.mark.biliass
 @pytest.mark.parametrize(
     ("cid",),
@@ -45,6 +46,7 @@ def test_xml_corpus(snapshot: SnapshotAssertion, cid: str):
     assert ass_danmaku == snapshot(name="ass")
 
 
+@pytest.mark.benchmark
 @pytest.mark.biliass
 @pytest.mark.parametrize(
     ("cid",),
