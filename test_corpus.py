@@ -31,7 +31,8 @@ def load_xml_danmaku(cid: str) -> str:
 
 def load_protobuf_danmaku(cid: str) -> list[bytes]:
     res: list[bytes] = []
-    for path in Path(CORPUS_DIR / "protobuf").glob(f"{cid}-*.pb"):
+    paths = sorted(Path(CORPUS_DIR / "protobuf").glob(f"{cid}-*.pb"), key=lambda path: path.stem)
+    for path in paths:
         with path.open("rb") as f:
             res.append(f.read())
     return res
