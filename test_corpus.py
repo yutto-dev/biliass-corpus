@@ -47,7 +47,7 @@ def load_protobuf_danmaku(cid: str) -> list[bytes]:
 def test_xml_corpus(snapshot: SnapshotAssertion, cid: str):
     source_danmaku = load_xml_danmaku(cid)
     assert sha256_str(source_danmaku) == snapshot(name="source_hash")
-    ass_danmaku = convert_to_ass(source_danmaku, 1920, 1080)
+    ass_danmaku = convert_to_ass(source_danmaku, 1920, 1080, reduce_comments=False)
     assert ass_danmaku == snapshot(name="ass")
 
 
@@ -61,5 +61,5 @@ def test_protobuf_corpus(snapshot: SnapshotAssertion, cid: str):
     source_danmakus = load_protobuf_danmaku(cid)
     source_hash = ", ".join([sha256_bytes(source_danmaku) for source_danmaku in source_danmakus])
     assert source_hash == snapshot(name="source_hash")
-    ass_danmaku = convert_to_ass(source_danmakus, 1920, 1080, input_format="protobuf")
+    ass_danmaku = convert_to_ass(source_danmakus, 1920, 1080, input_format="protobuf", reduce_comments=False)
     assert ass_danmaku == snapshot(name="ass")
