@@ -10,7 +10,7 @@ import httpx
 
 from yutto._typing import AId, AvId, BvId, CId
 from yutto.api.danmaku import get_protobuf_danmaku, get_xml_danmaku
-from yutto.utils.fetcher import create_client
+from yutto.utils.fetcher import FetcherContext, create_client
 
 CORPUS_IDS: list[tuple[AvId, CId]] = [
     (BvId("BV1vx41187Jd"), CId("18678311")),  # BV1vx41187Jd
@@ -44,24 +44,26 @@ def cli() -> argparse.Namespace:
     return parser.parse_args()
 
 
-async def download_xml_danmaku(client: httpx.AsyncClient, cid: CId, corpus_dir: Path, overwrite: bool = False):
+async def download_xml_danmaku(
+    ctx: FetcherContext, client: httpx.AsyncClient, cid: CId, corpus_dir: Path, overwrite: bool = False
+):
     corpus_dir.mkdir(parents=True, exist_ok=True)
     corpus_file_path = corpus_dir.joinpath(f"{cid}.xml")
     if not overwrite and corpus_file_path.exists():
         return
-    xml_text = await get_xml_danmaku(client, cid)
+    xml_text = await get_xml_danmaku(ctx, client, cid)
     async with aiofiles.open(corpus_file_path, "w") as f:
         await f.write(xml_text)
 
 
 async def download_protobuf_danmaku(
-    client: httpx.AsyncClient, avid: AvId, cid: CId, corpus_dir: Path, overwrite: bool = False
+    ctx: FetcherContext, client: httpx.AsyncClient, avid: AvId, cid: CId, corpus_dir: Path, overwrite: bool = False
 ):
     corpus_dir.mkdir(parents=True, exist_ok=True)
     corpus_first_file_path = corpus_dir.joinpath(f"{cid}-0.pb")
     if not overwrite and corpus_first_file_path.exists():
         return
-    protobuf_bytes_list = await get_protobuf_danmaku(client, avid, cid)
+    protobuf_bytes_list = await get_protobuf_danmaku(ctx, client, avid, cid)
     for i, protobuf_bytes in enumerate(protobuf_bytes_list):
         corpus_file_path = corpus_dir.joinpath(f"{cid}-{i}.pb")
         async with aiofiles.open(corpus_file_path, "wb") as f:
@@ -72,16 +74,16 @@ async def main():
     args = cli()
     cookies = httpx.Cookies()
     cookies.set("SESSDATA", quote(unquote(args.sessdata)))
+    ctx = FetcherContext()
     async with create_client(
-        # headers=BILIBILI_HEADERS,
         cookies=cookies,
     ) as client:
         await asyncio.gather(
-            *[download_xml_danmaku(client, cid, CORPUS_DIR / "xml", args.overwrite) for _, cid in CORPUS_IDS]
+            *[download_xml_danmaku(ctx, client, cid, CORPUS_DIR / "xml", args.overwrite) for _, cid in CORPUS_IDS]
         )
         await asyncio.gather(
             *[
-                download_protobuf_danmaku(client, avid, cid, CORPUS_DIR / "protobuf", args.overwrite)
+                download_protobuf_danmaku(ctx, client, avid, cid, CORPUS_DIR / "protobuf", args.overwrite)
                 for avid, cid in CORPUS_IDS
             ]
         )
