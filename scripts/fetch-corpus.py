@@ -31,11 +31,6 @@ CORPUS_IDS: list[tuple[AvId, CId]] = [
 ]
 CORPUS_DIR = Path("corpus")
 
-BILIBILI_HEADERS: dict[str, str] = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-    "Referer": "https://www.bilibili.com",
-}
-
 
 def cli() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Download Bilibili danmaku corpus")
