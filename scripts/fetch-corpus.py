@@ -8,8 +8,8 @@ from urllib.parse import quote, unquote
 import aiofiles
 import httpx
 
-from yutto._typing import AId, AvId, BvId, CId
 from yutto.api.danmaku import get_protobuf_danmaku, get_xml_danmaku
+from yutto.types import AId, AvId, BvId, CId
 from yutto.utils.fetcher import FetcherContext, create_client
 
 CORPUS_IDS: list[tuple[AvId, CId]] = [
