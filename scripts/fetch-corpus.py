@@ -3,14 +3,18 @@ from __future__ import annotations
 import argparse
 import asyncio
 from pathlib import Path
+from typing import TYPE_CHECKING
 from urllib.parse import quote, unquote
 
 import aiofiles
 import httpx
 
 from yutto.api.danmaku import get_protobuf_danmaku, get_xml_danmaku
-from yutto.types import AId, AvId, BvId, CId
+from yutto.types import AId, BvId, CId
 from yutto.utils.fetcher import FetcherContext, create_client
+
+if TYPE_CHECKING:
+    from yutto.types import AvId
 
 CORPUS_IDS: list[tuple[AvId, CId]] = [
     (BvId("BV1vx41187Jd"), CId("18678311")),  # BV1vx41187Jd
