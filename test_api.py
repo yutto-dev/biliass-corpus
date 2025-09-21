@@ -11,7 +11,7 @@ CORPUS_DIR = Path(__file__).parent / "corpus"
 @pytest.mark.biliass
 def test_protobuf():
     cid = 18678311
-    protobuf_paths = CORPUS_DIR.joinpath("protobuf").glob(f"{cid}-*.pb")
+    protobuf_paths = CORPUS_DIR.joinpath("protobuf").joinpath(str(cid)).glob(f"{cid}-*.pb")
     protobuf_bytes: list[bytes] = []
     for path in protobuf_paths:
         with path.open("rb") as f:

@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 CORPUS_DIR = Path(__file__).parent / "corpus"
 CORPUS_XML_CIDS = [(path.stem,) for path in CORPUS_DIR.glob("xml/*.xml")]
-CORPUS_PB_CIDS = list({(path.stem.split("-")[0],) for path in CORPUS_DIR.glob("protobuf/*.pb")})
+CORPUS_PB_CIDS = list({(path.name,) for path in (CORPUS_DIR / "protobuf").iterdir()})
 
 
 def sha256_str(text: str) -> str:
@@ -31,7 +31,7 @@ def load_xml_danmaku(cid: str) -> str:
 
 def load_protobuf_danmaku(cid: str) -> list[bytes]:
     res: list[bytes] = []
-    paths = sorted(Path(CORPUS_DIR / "protobuf").glob(f"{cid}-*.pb"), key=lambda path: path.stem)
+    paths = sorted(Path(CORPUS_DIR / "protobuf" / str(cid)).glob(f"{cid}-*.pb"), key=lambda path: path.stem)
     for path in paths:
         with path.open("rb") as f:
             res.append(f.read())

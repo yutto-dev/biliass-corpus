@@ -32,6 +32,7 @@ CORPUS_IDS: list[tuple[AvId, CId]] = [
     (BvId("BV114421Q7yh"), CId("1600157973")),  # BV114421Q7yh
     (BvId("BV1dS411c7sm"), CId("1617171254")),  # BV1dS411c7sm
     (BvId("BV19U411m7PK"), CId("1660054944")),  # BV19U411m7PK
+    (BvId("BV1rBvNzsE7K"), CId("31973115923")),  # BV1rBvNzsE7K
 ]
 CORPUS_DIR = Path("corpus")
 
@@ -59,12 +60,13 @@ async def download_protobuf_danmaku(
     ctx: FetcherContext, client: httpx.AsyncClient, avid: AvId, cid: CId, corpus_dir: Path, overwrite: bool = False
 ):
     corpus_dir.mkdir(parents=True, exist_ok=True)
-    corpus_first_file_path = corpus_dir.joinpath(f"{cid}-0.pb")
-    if not overwrite and corpus_first_file_path.exists():
+    current_danmaku_dir = corpus_dir / str(cid)
+    if not overwrite and current_danmaku_dir.exists():
         return
+    current_danmaku_dir.mkdir(parents=True, exist_ok=True)
     protobuf_bytes_list = await get_protobuf_danmaku(ctx, client, avid, cid)
     for i, protobuf_bytes in enumerate(protobuf_bytes_list):
-        corpus_file_path = corpus_dir.joinpath(f"{cid}-{i}.pb")
+        corpus_file_path = current_danmaku_dir.joinpath(f"{cid}-{i}.pb")
         async with aiofiles.open(corpus_file_path, "wb") as f:
             await f.write(protobuf_bytes)
 
@@ -74,6 +76,7 @@ async def main():
     cookies = httpx.Cookies()
     cookies.set("SESSDATA", quote(unquote(args.sessdata)))
     ctx = FetcherContext()
+    ctx.set_fetch_semaphore(8)
     async with create_client(
         cookies=cookies,
     ) as client:

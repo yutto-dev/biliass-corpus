@@ -18,7 +18,7 @@ def read_bytes_from_path(path: Path):
 @pytest.mark.biliass
 def test_free_threading():
     cid = "371495955"
-    protobuf_paths = (CORPUS_DIR / "protobuf").glob(f"{cid}-*.pb")
+    protobuf_paths = (CORPUS_DIR / "protobuf" / str(cid)).glob(f"{cid}-*.pb")
     protobuf_bytes = [read_bytes_from_path(path) for path in protobuf_paths]
 
     n_threads = 24
