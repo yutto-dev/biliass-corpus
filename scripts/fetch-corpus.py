@@ -10,8 +10,9 @@ import aiofiles
 import httpx
 
 from yutto.api.danmaku import get_protobuf_danmaku, get_xml_danmaku
+from yutto.core.execution import ExecutionScope
 from yutto.types import AId, BvId, CId
-from yutto.utils.fetcher import FetcherContext, create_client
+from yutto.utils.fetcher import create_client
 
 if TYPE_CHECKING:
     from yutto.types import AvId
@@ -44,27 +45,25 @@ def cli() -> argparse.Namespace:
     return parser.parse_args()
 
 
-async def download_xml_danmaku(
-    ctx: FetcherContext, client: httpx.AsyncClient, cid: CId, corpus_dir: Path, overwrite: bool = False
-):
+async def download_xml_danmaku(scope: ExecutionScope, cid: CId, corpus_dir: Path, overwrite: bool = False):
     corpus_dir.mkdir(parents=True, exist_ok=True)
     corpus_file_path = corpus_dir.joinpath(f"{cid}.xml")
     if not overwrite and corpus_file_path.exists():
         return
-    xml_text = await get_xml_danmaku(ctx, client, cid)
+    xml_text = await get_xml_danmaku(scope, cid)
     async with aiofiles.open(corpus_file_path, "w") as f:
         await f.write(xml_text)
 
 
 async def download_protobuf_danmaku(
-    ctx: FetcherContext, client: httpx.AsyncClient, avid: AvId, cid: CId, corpus_dir: Path, overwrite: bool = False
+    scope: ExecutionScope, avid: AvId, cid: CId, corpus_dir: Path, overwrite: bool = False
 ):
     corpus_dir.mkdir(parents=True, exist_ok=True)
     current_danmaku_dir = corpus_dir / str(cid)
     if not overwrite and current_danmaku_dir.exists():
         return
     current_danmaku_dir.mkdir(parents=True, exist_ok=True)
-    protobuf_bytes_list = await get_protobuf_danmaku(ctx, client, avid, cid)
+    protobuf_bytes_list = await get_protobuf_danmaku(scope, avid, cid)
     for i, protobuf_bytes in enumerate(protobuf_bytes_list):
         corpus_file_path = current_danmaku_dir.joinpath(f"{cid}-{i}.pb")
         async with aiofiles.open(corpus_file_path, "wb") as f:
@@ -75,17 +74,16 @@ async def main():
     args = cli()
     cookies = httpx.Cookies()
     cookies.set("SESSDATA", quote(unquote(args.sessdata)))
-    ctx = FetcherContext()
-    ctx.set_fetch_semaphore(8)
     async with create_client(
         cookies=cookies,
     ) as client:
+        scope = ExecutionScope(client, fetch_workers=8)
         await asyncio.gather(
-            *[download_xml_danmaku(ctx, client, cid, CORPUS_DIR / "xml", args.overwrite) for _, cid in CORPUS_IDS]
+            *[download_xml_danmaku(scope, cid, CORPUS_DIR / "xml", args.overwrite) for _, cid in CORPUS_IDS]
         )
         await asyncio.gather(
             *[
-                download_protobuf_danmaku(ctx, client, avid, cid, CORPUS_DIR / "protobuf", args.overwrite)
+                download_protobuf_danmaku(scope, avid, cid, CORPUS_DIR / "protobuf", args.overwrite)
                 for avid, cid in CORPUS_IDS
             ]
         )
