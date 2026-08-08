@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 from urllib.parse import quote, unquote
 
 import aiofiles
-import httpx
 
 from yutto.api.danmaku import get_protobuf_danmaku, get_xml_danmaku
 from yutto.core.execution import ExecutionScope
@@ -72,8 +71,7 @@ async def download_protobuf_danmaku(
 
 async def main():
     args = cli()
-    cookies = httpx.Cookies()
-    cookies.set("SESSDATA", quote(unquote(args.sessdata)))
+    cookies = {"SESSDATA": quote(unquote(args.sessdata))} if args.sessdata else {}
     async with create_client(
         cookies=cookies,
     ) as client:
